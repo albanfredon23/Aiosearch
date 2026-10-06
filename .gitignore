@@ -1,0 +1,24 @@
+# Secrets et données locales : jamais versionnés
+.env
+*.pem
+*.key
+*.sqlite3
+*.db
+/data/
+/engine/data/
+sandbox/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Web
+node_modules/
+web/dist/
