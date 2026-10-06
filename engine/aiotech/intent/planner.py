@@ -18,7 +18,8 @@ import re
 from dataclasses import dataclass
 from importlib import resources
 
-from aiotech.core.text import STOPWORDS, content_words, normalize, words
+from aiotech.core.text import STOPWORDS, content_words, has_phrase, normalize, words
+from aiotech.core.units import unit_spec
 from aiotech.graph.entities import clean_subject
 from aiotech.intent.constraints import extract_constraints
 from aiotech.models import IntentPlan, Interpretation, QuestionType
@@ -53,6 +54,7 @@ _ENTITY_STOP = frozenset(
     {"quel", "quelle", "quels", "quelles", "le", "la", "les", "un", "une", "what", "which", "is", "est", "comment",
      "pourquoi", "combien", "qui", "ou", "how", "why", "the", "a", "an", "pc", "je", "i"}
 )
+_TECH_TOKENS = frozenset({"ram", "ssd", "hdd", "cpu", "gpu", "pc", "os", "usb", "wifi", "ia", "ai", "api", "faq", "tva"})
 _COMPARISON_SPLIT_RE = re.compile(r"\s+(?:vs\.?|versus|ou|or|contre|against)\s+", re.IGNORECASE)
 
 
@@ -101,6 +103,8 @@ def query_entities(query: str) -> list[str]:
         tokens = match.group(0).split()
         while tokens and normalize(tokens[0]) in _ENTITY_STOP:
             tokens = tokens[1:]
+        if len(tokens) == 1 and (normalize(tokens[0]) in _TECH_TOKENS or unit_spec(tokens[0]) is not None):
+            continue
         if not tokens:
             continue
         entity = " ".join(tokens)
@@ -162,8 +166,7 @@ class RulePlanner:
 
     @staticmethod
     def _facet_interpretations(query: str, group: FacetGroup, limit: int) -> list[Interpretation]:
-        padded = f" {' '.join(words(query))} "
-        explicit = [f for f in group.facets if any(f" {' '.join(words(t))} " in padded for t in f.terms)]
+        explicit = [f for f in group.facets if any(has_phrase(query, t) for t in f.terms)]
         exclude = frozenset(group.triggers) | frozenset(normalize(t) for f in group.facets for t in f.terms)
         core = _core_terms(query, exclude)
         out: list[Interpretation] = []

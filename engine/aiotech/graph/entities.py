@@ -44,8 +44,9 @@ _MAX_SUBJECT_WORDS = 12
 def clean_subject(raw: str) -> str | None:
     """Sujet lisible ou None si c'est un pronom, une phrase trop longue ou du vide."""
     text = raw.strip().strip(" ,;:-–—\"'«»()")
-    if "," in text:
-        text = text.rsplit(",", 1)[1].strip()
+    for separator in (",", ":"):
+        if separator in text:
+            text = text.rsplit(separator, 1)[1].strip()
     text = _LEADING_DETERMINERS.sub("", text).strip()
     text = _ATTRIBUTE_LEADS.sub("", text).strip()
     text = _LEADING_DETERMINERS.sub("", text).strip()

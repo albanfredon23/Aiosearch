@@ -73,7 +73,9 @@ _LE_RE = re.compile(
 _TYPE_RE = re.compile(
     r"^(?P<subject>.+?)\s+(?:est|is)\s+(?:un|une|a|an)\s+(?P<type>[^,.;:!?]+)", re.IGNORECASE
 )
-_TYPE_CUT_RE = re.compile(r"\s+(?:de\s+\d|avec|qui|que|with|that|which|pour|for|à\s+\d)\b.*$", re.IGNORECASE)
+_TYPE_CUT_RE = re.compile(
+    r"\s+(?:(?:de|d['’]|à|of)\s*\d.*|(?:avec|qui|que|with|that|which|pour|for)\b.*)$", re.IGNORECASE
+)
 _LABEL_VALUE_RE = re.compile(r"^(?P<label>[^:]{2,60}?)\s*:\s*", re.IGNORECASE)
 _WINDOW = 32
 

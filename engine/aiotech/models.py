@@ -205,6 +205,7 @@ class ComputeBudget(Frozen):
     use_llm_extraction: bool
     use_llm_synthesis: bool
     effort: Literal["low", "medium", "high"]
+    hops: int = Field(default=1, ge=1, le=3)
 
 
 class PiiFinding(Frozen):

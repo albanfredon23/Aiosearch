@@ -1,0 +1,100 @@
+[
+  {
+    "id": "demo-novabook-15",
+    "title": "Fiche technique Nova Book 15 (données de démonstration)",
+    "reliability": 0.8,
+    "metadata": {"demo": "true"},
+    "text": "Le Nova Book 15 est un ordinateur portable de 15,6 pouces. Il coûte 479 €. Il dispose de 16 Go de RAM et d'un SSD de 512 Go. Il embarque un processeur à 6 cœurs. Il pèse 1,6 kg."
+  },
+  {
+    "id": "demo-comparatif-portables",
+    "title": "Comparatif des PC portables à moins de 500 € (données de démonstration)",
+    "reliability": 0.7,
+    "metadata": {"demo": "true"},
+    "text": "Le Nova Book 15 coûte 479 € et offre 16 Go de RAM. L'Aria Book 14 est un ordinateur portable d'entrée de gamme. L'Aria Book 14 coûte 399 € avec 8 Go de RAM. Le Zenit Air 15 est un ordinateur portable fin. Le Zenit Air 15 coûte 549 € et dispose de 16 Go de RAM."
+  },
+  {
+    "id": "demo-forum-bons-plans",
+    "title": "Forum bons plans informatique (données de démonstration)",
+    "reliability": 0.35,
+    "metadata": {"demo": "true"},
+    "text": "Bon plan ordinateur portable : le Nova Book 15 coûte 529 € en ce moment."
+  },
+  {
+    "id": "demo-orion-mini",
+    "title": "Fiche Orion Mini PC (données de démonstration)",
+    "reliability": 0.6,
+    "metadata": {"demo": "true"},
+    "text": "L'Orion Mini PC est un PC fixe compact de bureau. Il coûte 429 €. Il dispose de 16 Go de RAM, d'un SSD de 500 Go et d'un processeur à 8 cœurs."
+  },
+  {
+    "id": "demo-revendeur-orion",
+    "title": "Revendeur informatique, PC de bureau (données de démonstration)",
+    "reliability": 0.55,
+    "metadata": {"demo": "true"},
+    "text": "Promotion PC de bureau : l'Orion Mini PC coûte 459 € avec livraison."
+  },
+  {
+    "id": "demo-atlas-tower",
+    "title": "Fiche Atlas Tower R5 (données de démonstration)",
+    "reliability": 0.7,
+    "metadata": {"demo": "true"},
+    "text": "L'Atlas Tower R5 est une tour de bureau pour le jeu. Elle coûte 589 €. Elle dispose de 32 Go de RAM et d'un processeur à 8 cœurs."
+  },
+  {
+    "id": "demo-vegabook-reconditionne",
+    "title": "Vega Book 14 reconditionné, grade A (données de démonstration)",
+    "reliability": 0.7,
+    "metadata": {"demo": "true"},
+    "text": "Le Vega Book 14 reconditionné est un ordinateur portable reconditionné de 14 pouces, garanti un an. Il coûte 389 €. Il dispose de 16 Go de RAM, d'un SSD de 256 Go et d'un processeur à 4 cœurs."
+  },
+  {
+    "id": "demo-aiotech-44-config",
+    "title": "AIOTECH 44 : configuration requise",
+    "reliability": 0.9,
+    "metadata": {"demo": "true"},
+    "text": "AIOTECH 44 nécessite au moins 16 Go de RAM et un processeur de 4 cœurs minimum. Un SSD est recommandé pour charger les index rapidement."
+  },
+  {
+    "id": "legal-l221-18",
+    "title": "Code de la consommation, article L221-18",
+    "reliability": 0.97,
+    "metadata": {"type": "loi"},
+    "text": "Le délai de rétractation est de 14 jours pour un contrat conclu à distance, selon l'article L221-18 du Code de la consommation. Pour un contrat de vente, ce délai court à compter de la réception du bien par le consommateur."
+  },
+  {
+    "id": "legal-service-public-retractation",
+    "title": "Service-Public.fr : droit de rétractation pour un achat à distance",
+    "reliability": 0.95,
+    "metadata": {"type": "pratique"},
+    "text": "Pour un achat en ligne, le délai de rétractation est de 14 jours. Pour exercer ce droit, le consommateur envoie au vendeur le formulaire de rétractation ou une déclaration sans ambiguïté avant la fin du délai."
+  },
+  {
+    "id": "legal-blog-retractation",
+    "title": "Blog conso, astuces d'achat (données de démonstration)",
+    "reliability": 0.45,
+    "metadata": {"demo": "true"},
+    "text": "Achat sur internet : le délai de rétractation est de 7 jours pour un achat en ligne, il faut donc se dépêcher."
+  },
+  {
+    "id": "legal-exceptions-retractation",
+    "title": "Service-Public.fr : exceptions au droit de rétractation",
+    "reliability": 0.95,
+    "metadata": {"type": "exceptions"},
+    "text": "Le droit de rétractation ne s'applique pas aux biens confectionnés selon les spécifications du consommateur. Il ne s'applique pas non plus aux denrées périssables ni aux enregistrements audio ou vidéo descellés."
+  },
+  {
+    "id": "aiotech-search-presentation",
+    "title": "AIOTECH Search : présentation",
+    "reliability": 0.8,
+    "metadata": {"type": "documentation"},
+    "text": "AIOTECH Search est un moteur de recherche agentique qui cherche le chemin le plus fiable et vérifié de la question à la réponse. Il décompose chaque question en trajectoires, projette les sources dans un graphe de connaissances qui détecte les contradictions et attribue à chaque affirmation un statut FAIT, INFÉRENCE, INCERTAIN ou NON VÉRIFIÉ."
+  },
+  {
+    "id": "godel-tnorm",
+    "title": "Logique floue : la t-norme de Gödel",
+    "reliability": 0.85,
+    "metadata": {"type": "documentation"},
+    "text": "La t-norme de Gödel associe à deux degrés de vérité leur minimum, T(a, b) = min(a, b). Une conjonction n'est donc jamais plus vraie que sa prémisse la plus faible."
+  }
+]

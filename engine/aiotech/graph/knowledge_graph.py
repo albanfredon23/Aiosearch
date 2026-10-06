@@ -19,12 +19,27 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
-from aiotech.core.text import normalize
+from aiotech.core.text import content_words, normalize
 from aiotech.core.units import same_value
 from aiotech.graph.entities import EntityResolver, same_entity
 from aiotech.models import Claim, Contradiction, Source, ValueGroup
 
 _NON_CONFLICTING_ATTRIBUTES = frozenset({"type", "statement"})
+_SINGLE_VALUED_TEXT = frozenset(
+    {
+        "capital", "date", "birth_date", "death_date", "birthplace", "founded", "founding_date", "release_date",
+        "release_year", "author", "director", "founder", "ceo", "headquarters", "nationality", "country",
+        "inventor", "creator", "composer", "spouse", "height", "duration", "deadline",
+    }
+)
+
+
+def same_text_value(a: str, b: str) -> bool:
+    """Deux valeurs textuelles concordent si l'une contient tous les mots de l'autre (« Nolan » ⊂ « Christopher Nolan »)."""
+    if normalize(a) == normalize(b):
+        return True
+    wa, wb = set(content_words(a)), set(content_words(b))
+    return bool(wa) and bool(wb) and (wa <= wb or wb <= wa)
 
 
 def noisy_or(reliabilities: Iterable[float]) -> float:
@@ -95,7 +110,7 @@ class KnowledgeGraph:
                 else:
                     matched = (
                         claim.quantity is None and head.quantity is None
-                        and normalize(claim.value_text) == normalize(head.value_text)
+                        and same_text_value(claim.value_text, head.value_text)
                     )
                 if matched:
                     cluster.append(claim)
@@ -125,7 +140,10 @@ class KnowledgeGraph:
         groups = tuple(self._groups(exact))
         if not groups:
             return Resolution((), None, False, False, 0.0)
-        if len(groups) == 1 or attribute in _NON_CONFLICTING_ATTRIBUTES:
+        quantified = any(g.quantity is not None for g in groups)
+        if len(groups) == 1 or attribute in _NON_CONFLICTING_ATTRIBUTES or (
+            not quantified and attribute not in _SINGLE_VALUED_TEXT
+        ):
             return Resolution(groups, groups[0], False, True, groups[0].support)
         margin = round(groups[0].support - groups[1].support, 4)
         resolved = margin >= self.resolution_margin

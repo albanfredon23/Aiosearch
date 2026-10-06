@@ -4,6 +4,8 @@ fusionnés par rangs réciproques (Reciprocal Rank Fusion, k = 60).
 
 La fusion par rangs évite de mélanger des échelles de scores incomparables : un passage
 bien classé par les deux méthodes passe devant un passage excellent pour une seule.
+Un passage trouvé par les seuls vecteurs (aucun mot commun avec la requête) doit atteindre
+reach >= 0,3 : en dessous, la ressemblance ne tient qu'à des fragments de mots.
 """
 from __future__ import annotations
 
@@ -25,6 +27,7 @@ RRF_K = 60.0
 class PassageIndex:
     embedder: HashingEmbedder = field(default_factory=lambda: HashingEmbedder(bigram_weight=0.0))
     min_reach: float = 0.12
+    vector_only_reach: float = 0.3
     passages: list[Passage] = field(default_factory=list)
     _bm25: BM25Index = field(default_factory=BM25Index)
     _matrix: Matrix = field(default_factory=lambda: np.zeros((0, 1), dtype=np.float32))
@@ -54,6 +57,8 @@ class PassageIndex:
 
         fused: list[ScoredPassage] = []
         for i in set(bm25_rank) | set(vector_rank):
+            if i not in bm25_rank and reaches[i] < self.vector_only_reach:
+                continue
             score = 0.0
             if i in bm25_rank:
                 score += 1.0 / (RRF_K + bm25_rank[i])

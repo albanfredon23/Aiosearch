@@ -113,3 +113,11 @@ def jaccard(a: set[str] | frozenset[str], b: set[str] | frozenset[str]) -> float
     if not a and not b:
         return 1.0
     return len(a & b) / len(a | b)
+
+
+def has_phrase(text: str, phrase: str) -> bool:
+    """`phrase` apparaît dans `text` comme suite de mots entiers (« tour » ne trouve pas « tourner »)."""
+    target = words(phrase)
+    if not target:
+        return False
+    return f" {' '.join(target)} " in f" {' '.join(words(text))} "
