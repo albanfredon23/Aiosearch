@@ -46,6 +46,7 @@ strict = true
 
 [tool.setuptools.package-data]
 "aiotech.data" = ["*.json"]
+"aiotech.bench.data" = ["*.jsonl.gz", "*.md"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]

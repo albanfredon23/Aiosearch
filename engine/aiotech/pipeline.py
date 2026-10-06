@@ -298,6 +298,17 @@ class SearchEngine:
             yield _event("warning", {"message": warning})
         yield _event("done", {"result": result.model_dump(mode="json")})
 
+    def evidence(self, query: str, depth: Depth = "auto", top_k: int | None = None) -> tuple[list[ScoredPassage], ComputeBudget]:
+        """Étape de recherche seule (requête et entités, second saut si le budget le prévoit), sans raisonnement."""
+        plan = self.planner.plan(query, max_interpretations=4)
+        budget = self.compute_gate.budget(plan, depth, use_llm=False)
+        k = top_k or budget.top_k
+        empty = CorpusStore(reliability=self.reliability, chunk_tokens=self.corpus.chunk_tokens)
+        passages = self._retrieve([plan.query, *plan.entities], k, empty)
+        if budget.hops > 1:
+            passages = self._second_hop(plan, passages, k, empty)
+        return passages, budget
+
     def _retrieve(self, queries: Sequence[str], top_k: int, web_store: CorpusStore) -> list[ScoredPassage]:
         batches: list[list[ScoredPassage]] = []
         for q in queries:
