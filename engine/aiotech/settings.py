@@ -62,13 +62,14 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> Settings:
-        provider = _str("AIOTECH_LLM_PROVIDER", "anthropic").lower()
-        if provider not in {"anthropic", "litellm", "none"}:
+        providers: dict[str, ProviderName] = {"anthropic": "anthropic", "litellm": "litellm", "none": "none"}
+        provider = providers.get(_str("AIOTECH_LLM_PROVIDER", "anthropic").lower())
+        if provider is None:
             raise ValueError("AIOTECH_LLM_PROVIDER doit valoir anthropic, litellm ou none")
         default_model = "claude-opus-5-5" if provider == "anthropic" else ""
         api_keys = _str("AIOTECH_API_KEYS")
         return cls(
-            llm_provider=provider,  # type: ignore[arg-type]
+            llm_provider=provider,
             llm_model=_str("AIOTECH_LLM_MODEL", default_model) or default_model,
             llm_fast_model=_str("AIOTECH_LLM_FAST_MODEL"),
             llm_fallback_models=tuple(m.strip() for m in _str("AIOTECH_LLM_FALLBACK_MODELS").split(",") if m.strip()),

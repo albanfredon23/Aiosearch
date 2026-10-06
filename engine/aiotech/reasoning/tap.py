@@ -32,6 +32,7 @@ from typing import Literal
 from aiotech.core.arg import ReachabilityGate
 from aiotech.core.text import content_words, jaccard, split_sentences
 from aiotech.core.units import satisfies
+from aiotech.graph.claims import query_attributes
 from aiotech.graph.entities import entity_key
 from aiotech.graph.knowledge_graph import KnowledgeGraph, noisy_or
 from aiotech.models import (
@@ -146,16 +147,14 @@ class Reasoner:
         )
 
     def _families(self, evidence: TrajectoryEvidence) -> list[list[Draft]]:
-        """Familles de candidats par ordre de priorité ; la suivante n'est essayée que si toutes sont rejetées."""
+        """Familles de candidats par priorité ; la suivante n'est essayée que si la précédente est entièrement rejetée."""
         entity_first = self.plan.question_type in ("recommendation", "comparison") or bool(self.plan.constraints)
         entities = self._entity_drafts(evidence)
         values = self._value_drafts(evidence)
-        ordered = [entities, values] if entity_first else [values, entities]
-        families = [family for family in ordered if family]
         statements = self._statement_drafts(evidence)
-        if statements:
-            families.append(statements)
-        return families
+        # Question factuelle : valeurs et phrases de source sont en concurrence directe.
+        ordered = [entities, values, statements] if entity_first else [values + statements, entities]
+        return [family for family in ordered if family]
 
     def _entity_drafts(self, evidence: TrajectoryEvidence) -> list[Draft]:
         comparison = self.plan.question_type == "comparison"
@@ -203,9 +202,12 @@ class Reasoner:
     def _value_drafts(self, evidence: TrajectoryEvidence) -> list[Draft]:
         drafts: list[Draft] = []
         seen: set[tuple[str, str]] = set()
+        asked = query_attributes(self.plan.query)
         for claim in evidence.claims:
             key = self.graph.canonical_key(claim.subject_key)
             if claim.kind != "fact" or not self._is_query_topic(key) or (key, claim.attribute) in seen:
+                continue
+            if asked and claim.attribute not in asked:
                 continue
             seen.add((key, claim.attribute))
             resolution = self.graph.resolve(key, claim.attribute)
@@ -426,21 +428,36 @@ class Reasoner:
         facet = self._facet_premise(f"{draft.sentence} {passage.source.title}", evidence.interpretation)
         if facet is not None:
             premises.append(facet)
-        disputed = self._sentence_disputed(draft.sentence, passage)
+        state, detail = self._sentence_consistency(draft.sentence, passage)
+        if state == "contradicted":
+            premises.append(Premise(label=f"Contredit par des sources plus fiables ({detail})", degree=0.0,
+                                    kind="consistency"))
+            claim = VerifiedClaim(text=draft.sentence, status=Status.NON_VERIFIE,
+                                  reason=f"Contredit par des sources plus fiables ({detail})",
+                                  sources=(passage.source,), confidence=0.0)
+            return premises, [claim]
+        disputed = state == "disputed"
         premises.append(Premise(label="Une autre source donne une valeur différente" if disputed
                                 else "Aucune contradiction ouverte",
                                 degree=UNKNOWN if disputed else 1.0, kind="consistency"))
         claim = self.verifier.verify_statement(draft.sentence, draft.sentence, passage, draft.corroborating, disputed)
         return premises, [claim]
 
-    def _sentence_disputed(self, sentence: str, passage: Passage) -> bool:
+    def _sentence_consistency(self, sentence: str, passage: Passage) -> tuple[str, str]:
+        """« contradicted » si la phrase porte une valeur écartée par le graphe, « disputed » si conflit ouvert."""
+        state, detail = "consistent", ""
         for claim in self.graph.claims.values():
-            if (
-                claim.passage_id == passage.id and claim.quote == sentence
-                and claim.attribute in self._open_conflicts.get(self.graph.canonical_key(claim.subject_key), [])
-            ):
-                return True
-        return False
+            if claim.passage_id != passage.id or claim.quote != sentence:
+                continue
+            key = self.graph.canonical_key(claim.subject_key)
+            resolution = self.graph.resolve(key, claim.attribute)
+            if not resolution.conflict:
+                continue
+            if resolution.resolved and resolution.winner is not None and claim.id not in resolution.winner.claim_ids:
+                return "contradicted", f"{group_value(resolution.winner)}, appui {resolution.winner.support:.2f}"
+            if not resolution.resolved:
+                state = "disputed"
+        return state, detail
 
 
 def support_degree(reliabilities: Iterable[float]) -> float:

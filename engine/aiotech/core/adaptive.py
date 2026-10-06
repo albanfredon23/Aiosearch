@@ -92,3 +92,10 @@ class AdaptiveComputeGate:
             effort=spec.effort,
             hops=spec.hops,
         )
+
+
+_DEPTHS: dict[str, Depth] = {"auto": "auto", "light": "light", "standard": "standard", "deep": "deep"}
+
+
+def parse_depth(value: str | None) -> Depth:
+    return _DEPTHS.get((value or "auto").strip().lower(), "auto")

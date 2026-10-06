@@ -22,13 +22,15 @@ dependencies = [
 [project.optional-dependencies]
 providers = ["litellm>=1.50"]
 mcp = ["mcp>=1.2"]
-dev = ["pytest>=8.0", "fakeredis>=2.20", "ruff>=0.6", "mypy>=1.11"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "fakeredis>=2.20", "ruff>=0.6", "mypy>=1.11"]
 
 [tool.setuptools.packages.find]
 include = ["aiotech*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff]
 line-length = 132
@@ -44,3 +46,6 @@ strict = true
 
 [tool.setuptools.package-data]
 "aiotech.data" = ["*.json"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]

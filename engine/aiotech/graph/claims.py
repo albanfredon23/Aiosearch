@@ -16,7 +16,7 @@ import hashlib
 import re
 from dataclasses import dataclass
 
-from aiotech.core.text import split_sentences
+from aiotech.core.text import split_sentences, words
 from aiotech.core.units import iter_quantities
 from aiotech.graph.entities import clean_subject, entity_key
 from aiotech.models import Claim, ClaimKind, Comparator, Passage, Quantity
@@ -78,6 +78,20 @@ _TYPE_CUT_RE = re.compile(
 )
 _LABEL_VALUE_RE = re.compile(r"^(?P<label>[^:]{2,60}?)\s*:\s*", re.IGNORECASE)
 _WINDOW = 32
+
+
+_QUERY_ATTRIBUTE_WORDS: dict[str, str] = {
+    "prix": "price", "price": "price", "cout": "price", "coute": "price", "cost": "price", "tarif": "price",
+    "combien": "price", "ram": "ram", "memoire": "ram", "memory": "ram", "stockage": "storage", "storage": "storage",
+    "ssd": "storage", "disque": "storage", "vram": "vram", "poids": "weight", "weight": "weight", "pese": "weight",
+    "ecran": "screen", "screen": "screen", "pouces": "screen", "inch": "screen", "coeurs": "cores", "cores": "cores",
+    "frequence": "frequency", "ghz": "frequency", "puissance": "power", "watts": "power",
+}
+
+
+def query_attributes(query: str) -> set[str]:
+    """Attributs nommés dans une question (« quel est le prix... » -> price)."""
+    return {_QUERY_ATTRIBUTE_WORDS[w] for w in words(query) if w in _QUERY_ATTRIBUTE_WORDS}
 
 
 def _claim_id(passage_id: str, sentence_index: int, attribute: str, value: str) -> str:

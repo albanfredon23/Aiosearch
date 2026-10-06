@@ -116,8 +116,9 @@ def jaccard(a: set[str] | frozenset[str], b: set[str] | frozenset[str]) -> float
 
 
 def has_phrase(text: str, phrase: str) -> bool:
-    """`phrase` apparaît dans `text` comme suite de mots entiers (« tour » ne trouve pas « tourner »)."""
-    target = words(phrase)
+    """`phrase` apparaît dans `text` comme suite de mots entiers, au pluriel près
+    (« exception » trouve « exceptions », « tour » ne trouve pas « tourner »)."""
+    target = [stem(w) for w in words(phrase)]
     if not target:
         return False
-    return f" {' '.join(target)} " in f" {' '.join(words(text))} "
+    return f" {' '.join(target)} " in f" {' '.join(stem(w) for w in words(text))} "
