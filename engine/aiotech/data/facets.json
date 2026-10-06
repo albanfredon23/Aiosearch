@@ -1,0 +1,34 @@
+[
+  {
+    "triggers": ["ordinateur", "ordinateurs", "pc", "computer", "laptop", "machine", "config", "configuration"],
+    "facets": [
+      {"facet": "portable", "label": "PC portable", "terms": ["portable", "laptop", "ultrabook", "notebook"], "expansion": "ordinateur portable laptop"},
+      {"facet": "fixe", "label": "PC fixe", "terms": ["fixe", "tour", "desktop", "bureau", "mini pc", "mini-pc"], "expansion": "PC fixe tour mini PC de bureau"},
+      {"facet": "occasion", "label": "Occasion ou reconditionné", "terms": ["occasion", "reconditionné", "reconditionne", "refurbished", "seconde main"], "expansion": "ordinateur reconditionné occasion"}
+    ]
+  },
+  {
+    "triggers": ["telephone", "smartphone", "mobile", "portable android", "iphone"],
+    "facets": [
+      {"facet": "neuf", "label": "Smartphone neuf", "terms": ["neuf", "new"], "expansion": "smartphone neuf"},
+      {"facet": "reconditionne", "label": "Reconditionné", "terms": ["reconditionné", "reconditionne", "refurbished", "occasion"], "expansion": "smartphone reconditionné"},
+      {"facet": "entree-de-gamme", "label": "Entrée de gamme", "terms": ["entrée de gamme", "budget", "pas cher"], "expansion": "smartphone entrée de gamme pas cher"}
+    ]
+  },
+  {
+    "triggers": ["voiture", "vehicule", "véhicule", "auto", "car"],
+    "facets": [
+      {"facet": "electrique", "label": "Électrique", "terms": ["électrique", "electrique", "electric", "ev"], "expansion": "voiture électrique"},
+      {"facet": "hybride", "label": "Hybride", "terms": ["hybride", "hybrid"], "expansion": "voiture hybride"},
+      {"facet": "thermique", "label": "Thermique", "terms": ["essence", "diesel", "thermique"], "expansion": "voiture essence diesel"}
+    ]
+  },
+  {
+    "triggers": ["contrat", "bail", "loyer", "location", "licenciement", "retractation", "rétractation", "garantie"],
+    "facets": [
+      {"facet": "loi", "label": "Texte de loi", "terms": ["code", "article", "loi", "légal", "legal"], "expansion": "loi article code légal"},
+      {"facet": "pratique", "label": "Démarche pratique", "terms": ["démarche", "demarche", "formulaire", "comment"], "expansion": "démarche pratique formulaire"},
+      {"facet": "exceptions", "label": "Exceptions et cas particuliers", "terms": ["exception", "sauf", "exclu", "ne s'applique pas"], "expansion": "exceptions cas particuliers"}
+    ]
+  }
+]
