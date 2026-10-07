@@ -1,0 +1,517 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-10-07 03:45 UTC",
+  "seed": 20261006,
+  "host": {
+    "python": "3.13.16",
+    "platform": "Linux-6.18.44-fc-v77-x86_64-with-glibc2.41",
+    "machine": "x86_64",
+    "cpu_count": 4,
+    "processor": "x86_64"
+  },
+  "llm": {
+    "enabled": false,
+    "status": "désactivé (mesures hors ligne ; ajouter --llm et une clé pour EM/F1 et exactitude)"
+  },
+  "datasets": {
+    "hotpotqa": {
+      "metrics": [
+        {
+          "metric": "sp_recall@2",
+          "label": "Rappel des paragraphes utiles @2",
+          "values": {
+            "rag": {
+              "mean": 0.69,
+              "low": 0.6567,
+              "high": 0.7217,
+              "n": 300
+            },
+            "aiotech": {
+              "mean": 0.7833,
+              "low": 0.75,
+              "high": 0.815,
+              "n": 300
+            },
+            "aiotech-deep": {
+              "mean": 0.7933,
+              "low": 0.7617,
+              "high": 0.8233,
+              "n": 300
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.0933,
+              "low": 0.0617,
+              "high": 0.1267
+            },
+            "aiotech-deep": {
+              "mean": 0.1033,
+              "low": 0.0716,
+              "high": 0.1367
+            }
+          }
+        },
+        {
+          "metric": "sp_recall@5",
+          "label": "Rappel des paragraphes utiles @5",
+          "values": {
+            "rag": {
+              "mean": 0.875,
+              "low": 0.85,
+              "high": 0.8983,
+              "n": 300
+            },
+            "aiotech": {
+              "mean": 0.935,
+              "low": 0.9133,
+              "high": 0.955,
+              "n": 300
+            },
+            "aiotech-deep": {
+              "mean": 0.9517,
+              "low": 0.9317,
+              "high": 0.9683,
+              "n": 300
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.06,
+              "low": 0.0367,
+              "high": 0.0833
+            },
+            "aiotech-deep": {
+              "mean": 0.0767,
+              "low": 0.055,
+              "high": 0.1
+            }
+          }
+        },
+        {
+          "metric": "sp_all@2",
+          "label": "Les 2 paragraphes utiles dans le top 2",
+          "values": {
+            "rag": {
+              "mean": 0.42,
+              "low": 0.3633,
+              "high": 0.4767,
+              "n": 300
+            },
+            "aiotech": {
+              "mean": 0.5967,
+              "low": 0.54,
+              "high": 0.6533,
+              "n": 300
+            },
+            "aiotech-deep": {
+              "mean": 0.6167,
+              "low": 0.5633,
+              "high": 0.67,
+              "n": 300
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.1767,
+              "low": 0.1167,
+              "high": 0.24
+            },
+            "aiotech-deep": {
+              "mean": 0.1967,
+              "low": 0.1333,
+              "high": 0.2633
+            }
+          }
+        },
+        {
+          "metric": "sp_all@5",
+          "label": "Les 2 paragraphes utiles dans le top 5",
+          "values": {
+            "rag": {
+              "mean": 0.7567,
+              "low": 0.7067,
+              "high": 0.8033,
+              "n": 300
+            },
+            "aiotech": {
+              "mean": 0.88,
+              "low": 0.8433,
+              "high": 0.9167,
+              "n": 300
+            },
+            "aiotech-deep": {
+              "mean": 0.9133,
+              "low": 0.88,
+              "high": 0.9433,
+              "n": 300
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.1233,
+              "low": 0.08,
+              "high": 0.17
+            },
+            "aiotech-deep": {
+              "mean": 0.1567,
+              "low": 0.1133,
+              "high": 0.2033
+            }
+          }
+        },
+        {
+          "metric": "answered",
+          "label": "Taux de réponse (sinon abstention)",
+          "values": {
+            "rag": {
+              "mean": 1.0,
+              "low": 1.0,
+              "high": 1.0,
+              "n": 300
+            },
+            "aiotech": {
+              "mean": 0.9967,
+              "low": 0.99,
+              "high": 1.0,
+              "n": 300
+            },
+            "aiotech-deep": {
+              "mean": 0.9967,
+              "low": 0.99,
+              "high": 1.0,
+              "n": 300
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": -0.0033,
+              "low": -0.01,
+              "high": 0.0
+            },
+            "aiotech-deep": {
+              "mean": -0.0033,
+              "low": -0.01,
+              "high": 0.0
+            }
+          }
+        },
+        {
+          "metric": "answer_in_top",
+          "label": "Réponse attendue dans la réponse affichée en tête (hors oui/non)",
+          "values": {
+            "rag": {
+              "mean": 0.2657,
+              "low": 0.2168,
+              "high": 0.3182,
+              "n": 286
+            },
+            "aiotech": {
+              "mean": 0.2692,
+              "low": 0.2168,
+              "high": 0.3217,
+              "n": 286
+            },
+            "aiotech-deep": {
+              "mean": 0.2587,
+              "low": 0.2098,
+              "high": 0.3112,
+              "n": 286
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.0035,
+              "low": -0.049,
+              "high": 0.0524
+            },
+            "aiotech-deep": {
+              "mean": -0.007,
+              "low": -0.0559,
+              "high": 0.0455
+            }
+          }
+        },
+        {
+          "metric": "answer_in_top_when_answered",
+          "label": "Idem, parmi les questions où le système répond",
+          "values": {
+            "rag": {
+              "mean": 0.2657,
+              "low": 0.2168,
+              "high": 0.3182,
+              "n": 286
+            },
+            "aiotech": {
+              "mean": 0.2702,
+              "low": 0.2246,
+              "high": 0.3228,
+              "n": 285
+            },
+            "aiotech-deep": {
+              "mean": 0.2596,
+              "low": 0.2105,
+              "high": 0.3123,
+              "n": 285
+            }
+          }
+        }
+      ],
+      "efficiency": {
+        "rag": {
+          "queries": 300,
+          "latency_ms": {
+            "p50": 0.16,
+            "p95": 0.27,
+            "mean": 0.18
+          },
+          "cpu_ms_per_query": 0.18,
+          "energy_per_query": {
+            "value_mwh": 0.00074,
+            "method": "estimation : temps CPU × 15 W par cœur occupé"
+          },
+          "python_peak_mb": 1.04,
+          "vram_mb": 0,
+          "llm_calls": 0,
+          "llm_latency_ms": null,
+          "tokens_in_per_query": 0.0,
+          "tokens_out_per_query": 0.0,
+          "cost_usd_per_query": 0.0
+        },
+        "aiotech": {
+          "queries": 300,
+          "latency_ms": {
+            "p50": 12.15,
+            "p95": 22.11,
+            "mean": 12.78
+          },
+          "cpu_ms_per_query": 12.78,
+          "energy_per_query": {
+            "value_mwh": 0.05324,
+            "method": "estimation : temps CPU × 15 W par cœur occupé"
+          },
+          "python_peak_mb": 0.95,
+          "vram_mb": 0,
+          "llm_calls": 0,
+          "llm_latency_ms": null,
+          "tokens_in_per_query": 0.0,
+          "tokens_out_per_query": 0.0,
+          "cost_usd_per_query": 0.0
+        },
+        "aiotech-deep": {
+          "queries": 300,
+          "latency_ms": {
+            "p50": 17.5,
+            "p95": 25.56,
+            "mean": 17.08
+          },
+          "cpu_ms_per_query": 17.08,
+          "energy_per_query": {
+            "value_mwh": 0.07116,
+            "method": "estimation : temps CPU × 15 W par cœur occupé"
+          },
+          "python_peak_mb": 0.95,
+          "vram_mb": 0,
+          "llm_calls": 0,
+          "llm_latency_ms": null,
+          "tokens_in_per_query": 0.0,
+          "tokens_out_per_query": 0.0,
+          "cost_usd_per_query": 0.0
+        }
+      },
+      "errors": {},
+      "skipped": 0,
+      "dataset": "HotpotQA (dev, distractor)",
+      "n": 300,
+      "sampling": "300 questions tirées sans remise, random.Random(20261006), parmi les 7 405 du dev distractor officiel",
+      "setting": "10 paragraphes par question (2 utiles, 8 leurres) ; titre + texte indexés à l'identique",
+      "yes_no_excluded_from_answer_metrics": 14
+    },
+    "fever": {
+      "metrics": [
+        {
+          "metric": "evidence_recall@1",
+          "label": "Preuve exacte en 1re position",
+          "values": {
+            "rag": {
+              "mean": 0.3915,
+              "low": 0.3437,
+              "high": 0.4423,
+              "n": 355
+            },
+            "aiotech": {
+              "mean": 0.3944,
+              "low": 0.3465,
+              "high": 0.4451,
+              "n": 355
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.0028,
+              "low": -0.0085,
+              "high": 0.0141
+            }
+          }
+        },
+        {
+          "metric": "evidence_recall@5",
+          "label": "Preuve exacte dans le top 5",
+          "values": {
+            "rag": {
+              "mean": 0.9183,
+              "low": 0.8901,
+              "high": 0.9465,
+              "n": 355
+            },
+            "aiotech": {
+              "mean": 0.9127,
+              "low": 0.8817,
+              "high": 0.9408,
+              "n": 355
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": -0.0056,
+              "low": -0.0169,
+              "high": 0.0056
+            }
+          }
+        },
+        {
+          "metric": "evidence_mrr@10",
+          "label": "MRR@10 de la preuve exacte",
+          "values": {
+            "rag": {
+              "mean": 0.6251,
+              "low": 0.5932,
+              "high": 0.6583,
+              "n": 355
+            },
+            "aiotech": {
+              "mean": 0.6265,
+              "low": 0.595,
+              "high": 0.6593,
+              "n": 355
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.0014,
+              "low": -0.0059,
+              "high": 0.0086
+            }
+          }
+        },
+        {
+          "metric": "top_answer_cites_gold",
+          "label": "Réponse de tête appuyée sur la preuve exacte",
+          "values": {
+            "rag": {
+              "mean": 0.3915,
+              "low": 0.3437,
+              "high": 0.4423,
+              "n": 355
+            },
+            "aiotech": {
+              "mean": 0.4225,
+              "low": 0.3746,
+              "high": 0.4733,
+              "n": 355
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": 0.031,
+              "low": 0.0028,
+              "high": 0.0592
+            }
+          }
+        },
+        {
+          "metric": "answered",
+          "label": "Taux de réponse (sinon abstention)",
+          "values": {
+            "rag": {
+              "mean": 1.0,
+              "low": 1.0,
+              "high": 1.0,
+              "n": 355
+            },
+            "aiotech": {
+              "mean": 0.9718,
+              "low": 0.9549,
+              "high": 0.9887,
+              "n": 355
+            }
+          },
+          "difference_vs_rag": {
+            "aiotech": {
+              "mean": -0.0282,
+              "low": -0.0451,
+              "high": -0.0113
+            }
+          }
+        }
+      ],
+      "efficiency": {
+        "rag": {
+          "queries": 355,
+          "latency_ms": {
+            "p50": 0.12,
+            "p95": 0.24,
+            "mean": 0.14
+          },
+          "cpu_ms_per_query": 0.14,
+          "energy_per_query": {
+            "value_mwh": 0.00057,
+            "method": "estimation : temps CPU × 15 W par cœur occupé"
+          },
+          "python_peak_mb": 0.01,
+          "vram_mb": 0,
+          "llm_calls": 0,
+          "llm_latency_ms": null,
+          "tokens_in_per_query": 0.0,
+          "tokens_out_per_query": 0.0,
+          "cost_usd_per_query": 0.0
+        },
+        "aiotech": {
+          "queries": 355,
+          "latency_ms": {
+            "p50": 13.22,
+            "p95": 23.55,
+            "mean": 13.9
+          },
+          "cpu_ms_per_query": 13.9,
+          "energy_per_query": {
+            "value_mwh": 0.05791,
+            "method": "estimation : temps CPU × 15 W par cœur occupé"
+          },
+          "python_peak_mb": 10.51,
+          "vram_mb": 0,
+          "llm_calls": 0,
+          "llm_latency_ms": null,
+          "tokens_in_per_query": 0.0,
+          "tokens_out_per_query": 0.0,
+          "cost_usd_per_query": 0.0
+        }
+      },
+      "errors": {},
+      "skipped": 0,
+      "dataset": "FEVER (dev, paires affirmation / preuve originales)",
+      "n": 355,
+      "sampling": "les 355 paires originales du dev FEVER publiées par FeverSymmetric v0.2 (dev + test), sans tirage",
+      "setting": "corpus commun de 648 phrases : les preuves originales et 355 phrases modifiées (leurres difficiles) ; labels {'SUPPORTS': 147, 'REFUTES': 208}"
+    }
+  },
+  "process": {
+    "peak_rss_mb": 158.5,
+    "vram_mb": 0
+  },
+  "systems": {
+    "rag": "RAG classique (BM25 top-k)",
+    "aiotech": "AIOTECH Search (auto)",
+    "aiotech-deep": "AIOTECH Search (approfondi)"
+  }
+}

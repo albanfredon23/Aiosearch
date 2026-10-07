@@ -1,0 +1,9 @@
+#!/bin/sh
+# Clé d'API de l'interface, générée au premier démarrage et partagée avec le moteur (volume en lecture seule).
+if [ -z "${AIOTECH_WEB_API_KEY:-}" ] && [ -r /run/aiotech/web_key ]; then
+    AIOTECH_WEB_API_KEY="$(cat /run/aiotech/web_key)"
+fi
+if [ -z "${AIOTECH_WEB_API_KEY:-}" ]; then
+    echo "aiotech : clé de l'interface absente, les recherches depuis le site seront refusées" >&2
+fi
+export AIOTECH_WEB_API_KEY

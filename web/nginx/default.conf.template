@@ -1,0 +1,115 @@
+# Seul service exposé. Le moteur, Redis, Neo4j et SearXNG restent sur le réseau interne.
+limit_req_zone $binary_remote_addr zone=aiotech_ui:10m rate=2r/s;
+limit_req_zone $binary_remote_addr zone=aiotech_api:10m rate=10r/s;
+limit_req_status 429;
+
+upstream aiotech_engine {
+    server engine:8000;
+    keepalive 16;
+}
+
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+    root /usr/share/nginx/html;
+    client_max_body_size 256k;
+
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Interface : la clé web est ajoutée ici, jamais envoyée au navigateur.
+    location = /api/ui/search/stream {
+        limit_except GET { deny all; }
+        limit_req zone=aiotech_ui burst=8 nodelay;
+        proxy_set_header X-API-Key "${AIOTECH_WEB_API_KEY}";
+        proxy_set_header Authorization "";
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://aiotech_engine/v1/search/stream$is_args$args;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 120s;
+    }
+
+    location = /api/ui/feedback {
+        limit_except POST { deny all; }
+        limit_req zone=aiotech_ui burst=8 nodelay;
+        proxy_set_header X-API-Key "${AIOTECH_WEB_API_KEY}";
+        proxy_set_header Authorization "";
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://aiotech_engine/v1/feedback;
+    }
+
+    location /api/ {
+        return 404;
+    }
+
+    # API publique : chaque client présente sa propre clé.
+    location /v1/ {
+        limit_req zone=aiotech_api burst=20 nodelay;
+        proxy_pass http://aiotech_engine;
+        proxy_buffering off;
+        proxy_read_timeout 180s;
+    }
+
+    location /mcp {
+        limit_req zone=aiotech_api burst=20 nodelay;
+        proxy_pass http://aiotech_engine;
+        proxy_buffering off;
+        proxy_read_timeout 180s;
+    }
+
+    location = /health {
+        proxy_pass http://aiotech_engine/health;
+    }
+
+    location = /openapi.json {
+        proxy_pass http://aiotech_engine/openapi.json;
+    }
+
+    # Administration : réseau local ou privé uniquement, plus clé d'API et jeton d'administration.
+    location /admin {
+        allow 127.0.0.1;
+        allow ::1;
+        allow 10.0.0.0/8;
+        allow 172.16.0.0/12;
+        allow 192.168.0.0/16;
+        deny all;
+        proxy_pass http://aiotech_engine;
+    }
+
+    location = /docs {
+        return 404;
+    }
+
+    location /assets/ {
+        expires max;
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AIOTECH Search</title>
+    <meta name="description" content="Moteur de recherche cognitif : le chemin le plus fiable et vérifié de la question à la réponse, avec sources, contradictions et statuts de vérification." />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#q">Aller à la recherche</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="AIOTECH Search, accueil">
+        <span class="brand-mark" aria-hidden="true"></span>AIOTECH <span>Search</span>
+      </a>
+      <nav aria-label="Sections">
+        <a href="#fonctionnement">Fonctionnement</a>
+        <a href="#chiffres">Chiffres</a>
+        <a href="#portee">Portée</a>
+        <a href="#api">API</a>
+      </nav>
+    </header>
+
+    <section id="app" class="hero" aria-label="Recherche vérifiée">
+      <canvas id="scene" aria-hidden="true"></canvas>
+      <div id="labels" class="labels" aria-hidden="true"></div>
+
+      <div class="hero-copy">
+        <p class="eyebrow">Moteur de recherche cognitif</p>
+        <h1>Le chemin le plus fiable et vérifié<br />de la question à la réponse.</h1>
+      </div>
+
+      <form id="search" class="searchbar" role="search" autocomplete="off">
+        <label for="q" class="sr-only">Votre question</label>
+        <input id="q" name="q" type="search" maxlength="2000" enterkeyhint="search"
+          placeholder="Posez votre question, AIOTECH vérifie chaque affirmation…" />
+        <button type="submit" aria-label="Lancer la recherche">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+        </button>
+      </form>
+
+      <div class="below-bar">
+        <div id="examples" class="examples" aria-label="Exemples de questions"></div>
+        <div class="options">
+          <label>Profondeur
+            <select id="depth">
+              <option value="auto" selected>automatique</option>
+              <option value="light">légère</option>
+              <option value="standard">standard</option>
+              <option value="deep">approfondie</option>
+            </select>
+          </label>
+          <label class="switch"><input id="web" type="checkbox" checked /> <span>Web (SearXNG)</span></label>
+        </div>
+      </div>
+
+      <p id="phase" class="phase" role="status" aria-live="polite"></p>
+      <div id="answers" class="answers" aria-live="polite"></div>
+      <div id="hud" class="hud" aria-label="Coût de la recherche"></div>
+      <button id="reset" class="reset" type="button" hidden>Nouvelle recherche <kbd>Échap</kbd></button>
+    </section>
+
+    <main>
+      <section id="fonctionnement" class="section">
+        <h2>Comment AIOTECH Search répond</h2>
+        <p class="lead">Chaque requête est lue de plusieurs façons (les neurones), chaque lecture suit sa propre trajectoire
+          de preuves (les synapses), puis le nuage se contracte vers deux ou trois réponses classées par fiabilité.
+          Vos clics ne départagent que des réponses de fiabilité égale.</p>
+        <ol class="steps">
+          <li><h3>Garde-fous</h3><p>Cartes bancaires (contrôle de Luhn), IBAN, adresses IP, téléphones et e-mails sont masqués
+            avant tout traitement. Une injection de prompt, en français ou en anglais, est bloquée dès l'entrée : 0 jeton payé.</p></li>
+          <li><h3>Intention</h3><p>Type de question, contraintes chiffrées (« moins de 500 € »), entités, puis 2 à 4 interprétations
+            T1…T4. La porte de calcul adaptative dose trajectoires, passages, sauts et appels LLM selon la difficulté.</p></li>
+          <li><h3>Recherche hybride</h3><p>BM25 et vecteurs fusionnés par scores normalisés, sur vos documents et sur le web via
+            SearXNG auto-hébergé. Puis un saut dans le graphe des documents : un passage qui cite le titre d'un autre
+            document y mène, ce qui retrouve la seconde pièce d'une question en chaîne.</p></li>
+          <li><h3>Graphe et contradictions</h3><p>Entités, valeurs et sources forment un graphe. Si A dit X et B dit Y avec X ≠ Y,
+            la contradiction est détectée mécaniquement puis tranchée par la fiabilité des sources, ou laissée incertaine.</p></li>
+          <li><h3>Raisonnement SCG et TAP</h3><p>Chaque candidat est jugé par la t-norme de Gödel, T(a,b) = min(a,b) : une
+            prémisse fausse ou une contrainte violée rejette la trajectoire. La fiabilité finale ne dépasse jamais la prémisse la plus faible.</p></li>
+          <li><h3>Vérification</h3><p>Chaque affirmation porte un statut : <span class="badge s-fait">FAIT</span>
+            <span class="badge s-inference">INFÉRENCE</span> <span class="badge s-incertain">INCERTAIN</span>
+            <span class="badge s-nonverifie">NON VÉRIFIÉ</span>. Sans preuve suffisante, le moteur s'abstient.</p></li>
+        </ol>
+      </section>
+
+      <section id="chiffres" class="section">
+        <h2>Chiffres mesurés</h2>
+        <p class="lead">Comparaison avec une RAG classique (BM25 top-k) sur des échantillons figés de FEVER et HotpotQA, mêmes
+          documents pour tous les systèmes. Seuls des chiffres réellement mesurés sont affichés, avec la taille d'échantillon,
+          la méthode et l'intervalle de confiance. Reproductible en une commande :
+          <code>docker compose run --rm bench</code></p>
+        <div id="bench" class="bench"><p class="muted">Chargement des mesures…</p></div>
+      </section>
+
+      <section id="portee" class="section">
+        <h2>Portée du projet</h2>
+        <div class="columns">
+          <article>
+            <h3>Intérêt scientifique</h3>
+            <ul>
+              <li>Un raisonnement vérifiable de bout en bout : chaque réponse expose ses prémisses, leur degré et la source de chacune.</li>
+              <li>Une logique floue explicite (t-norme de Gödel, implication de Kleene-Dienes) plutôt qu'un score opaque.</li>
+              <li>L'abstention mesurée comme une qualité : mieux vaut « je ne sais pas » qu'une réponse non étayée.</li>
+              <li>Un protocole ouvert et reproductible : échantillons versionnés, graine fixe, intervalles de confiance, coût de calcul publié.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Usage professionnel</h3>
+            <ul>
+              <li>Veille vérifiée auto-hébergée : vos documents et le web restent sur votre infrastructure, conforme au RGPD par construction.</li>
+              <li>API compatible OpenAI, outils Claude et serveur MCP : un agent existant s'y branche sans réécriture.</li>
+              <li>Coût maîtrisé : hors ligne, une recherche ne consomme aucun jeton ; avec LLM, le coût par requête est mesuré et plafonné par palier.</li>
+              <li>Traçabilité : contradictions entre sources signalées, statut de chaque affirmation, journal des preuves.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="api" class="section">
+        <h2>Une API pour tous les LLM</h2>
+        <p class="lead">Claude par défaut, tout autre modèle via LiteLLM. Les mêmes recherches vérifiées sont exposées en
+          compatible OpenAI, en outils et en MCP. Chaque appel exige une clé d'API et respecte les quotas.</p>
+        <div class="code-grid">
+          <figure><figcaption>Flux des étapes (SSE)</figcaption>
+            <pre><code>curl -N -H "x-api-key: $AIOTECH_KEY" \
+  "https://votre-domaine/v1/search/stream?q=délai+de+rétractation"</code></pre></figure>
+          <figure><figcaption>Client OpenAI (Python)</figcaption>
+            <pre><code>from openai import OpenAI
+client = OpenAI(base_url="https://votre-domaine/v1",
+                api_key=AIOTECH_KEY)
+r = client.chat.completions.create(
+    model="aiotech-search",
+    messages=[{"role": "user", "content": question}])</code></pre></figure>
+          <figure><figcaption>Serveur MCP (Claude, agents)</figcaption>
+            <pre><code>{ "mcpServers": { "aiotech": {
+    "type": "http",
+    "url": "https://votre-domaine/mcp/",
+    "headers": { "x-api-key": "…" } } } }</code></pre></figure>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>AIOTECH Search · auto-hébergé, sans traceur, sans cookie. Les réponses indiquent leur fiabilité : vérifiez les
+        sources avant toute décision importante.</p>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
