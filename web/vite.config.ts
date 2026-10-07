@@ -4,6 +4,7 @@ const engine = process.env.AIOTECH_ENGINE_URL ?? "http://127.0.0.1:8000";
 const webKey = process.env.AIOTECH_WEB_API_KEY ?? "";
 
 export default defineConfig({
+  base: process.env.AIOTECH_BASE ?? "/",
   server: {
     port: 5173,
     proxy: {

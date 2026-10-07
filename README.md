@@ -10,6 +10,11 @@ le statut de chaque affirmation : `[FAIT]`, `[INFÉRENCE]`, `[INCERTAIN]` ou `[N
 - API pour tous les LLM : Claude par défaut, tout autre modèle via LiteLLM ; compatible OpenAI, outils, MCP.
 - Fonctionne sans clé : hors ligne, les réponses sont produites par règles et gabarits vérifiés, à 0 jeton.
 
+Vitrine en ligne : **https://albanfredon23.github.io/Aiosearch/** (interface 3D, chiffres mesurés, portée).
+Elle est statique : les questions proposées rejouent les étapes réelles du moteur, enregistrées sans web ni LLM
+(`python -m aiotech.showcase web/public/demo`, puis `VITE_DEMO=1 npm run build`), et chaque poussée sur `main`
+la republie (`.github/workflows/pages.yml`). Pour poser vos propres questions, lancez le moteur chez vous.
+
 ## Démarrage
 
 ```bash

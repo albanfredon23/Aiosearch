@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import { type Depth, type Possibility, type SearchResult, type Status, sendFeedback, streamSearch } from "./api";
+import { DEMO, type Depth, type Possibility, type SearchResult, type Status, demoQueries, sendFeedback, streamSearch } from "./api";
 import { renderBenchmarks } from "./landing";
 import { NeuralScene, webglAvailable } from "./scene";
 
@@ -83,14 +83,24 @@ if (!scene) {
   window.addEventListener("resize", syncBar);
 }
 
-for (const example of EXAMPLES) {
-  const chip = el("button", "chip", example);
-  chip.type = "button";
-  chip.addEventListener("click", () => {
-    input.value = example;
-    run(example);
-  });
-  examples.append(chip);
+function addExamples(queries: string[]): void {
+  for (const example of queries) {
+    const chip = el("button", "chip", example);
+    chip.type = "button";
+    chip.addEventListener("click", () => {
+      input.value = example;
+      run(example);
+    });
+    examples.append(chip);
+  }
+}
+
+if (DEMO) {
+  must<HTMLElement>("#demo-note").hidden = false;
+  must<HTMLElement>(".options").hidden = true;
+  void demoQueries().then((queries) => addExamples(queries.map((q) => q.query)));
+} else {
+  addExamples(EXAMPLES);
 }
 
 input.addEventListener("input", () => scene?.typing(Math.min(1, input.value.length / 40)));
@@ -323,7 +333,8 @@ function card(p: Possibility): HTMLElement {
     scene?.highlight(p.rank);
     for (const other of answers.querySelectorAll(".card")) other.classList.toggle("chosen", other === article);
     const ok = searchId ? await sendFeedback(searchId, p.interpretation_id) : false;
-    choose.textContent = ok ? "Merci : ce choix départagera les réponses à fiabilité égale" : "Choix non enregistré";
+    choose.textContent = ok ? "Merci : ce choix départagera les réponses à fiabilité égale"
+      : DEMO ? "Vitrine : sur votre serveur, ce choix départage les réponses à fiabilité égale" : "Choix non enregistré";
   });
 
   article.append(header, meter, el("h3", undefined, p.title));

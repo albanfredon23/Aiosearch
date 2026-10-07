@@ -137,8 +137,68 @@ export interface StreamHandlers {
 }
 
 const API = "/api/ui";
+const BASE = import.meta.env.BASE_URL;
+
+/** Vitrine statique (GitHub Pages) : les étapes réelles du moteur, enregistrées, sont rejouées sans serveur. */
+export const DEMO = import.meta.env.VITE_DEMO === "1";
+
+export interface DemoQuery {
+  query: string;
+  file: string;
+}
+
+interface RecordedEvent {
+  event: string;
+  data: unknown;
+}
+
+const normalized = (text: string): string =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+let demoIndex: Promise<DemoQuery[]> | null = null;
+
+export function demoQueries(): Promise<DemoQuery[]> {
+  demoIndex ??= fetch(`${BASE}demo/index.json`)
+    .then(async (r) => (r.ok ? ((await r.json()) as { queries: DemoQuery[] }).queries : []))
+    .catch(() => []);
+  return demoIndex;
+}
+
+function replayDemo(query: string, handlers: StreamHandlers): () => void {
+  let cancelled = false;
+  const timers: number[] = [];
+  const dispatch = (name: string, data: unknown): void => {
+    const handler = (handlers as Record<string, ((d: unknown) => void) | undefined>)[name === "error" ? "failure" : name];
+    handler?.(name === "error" ? (data as { message: string }).message : data);
+  };
+  void (async () => {
+    const match = (await demoQueries()).find((q) => normalized(q.query) === normalized(query));
+    if (cancelled) return;
+    if (!match) {
+      handlers.failure?.("Vitrine hors ligne : seules les questions proposées sont enregistrées ici. Pour poser les "
+        + "vôtres, lancez AIOTECH Search chez vous (docker compose up -d).");
+      return;
+    }
+    try {
+      const response = await fetch(`${BASE}demo/${match.file}`);
+      const events = (await response.json()) as RecordedEvent[];
+      events.forEach((e, i) => {
+        timers.push(window.setTimeout(() => {
+          if (!cancelled) dispatch(e.event, e.data);
+        }, 60 * i));
+      });
+    } catch {
+      if (!cancelled) handlers.failure?.("Enregistrement de démonstration illisible.");
+    }
+  })();
+  return () => {
+    cancelled = true;
+    timers.forEach((t) => window.clearTimeout(t));
+  };
+}
 
 export function streamSearch(query: string, depth: Depth, web: boolean, handlers: StreamHandlers): () => void {
+  if (DEMO) return replayDemo(query, handlers);
   const params = new URLSearchParams({ q: query, depth, web: String(web) });
   const source = new EventSource(`${API}/search/stream?${params.toString()}`);
   let finished = false;
@@ -181,6 +241,7 @@ export function streamSearch(query: string, depth: Depth, web: boolean, handlers
 }
 
 export async function sendFeedback(searchId: string, interpretationId: string): Promise<boolean> {
+  if (DEMO) return false;
   try {
     const response = await fetch(`${API}/feedback`, {
       method: "POST",
@@ -242,7 +303,7 @@ export interface BenchReport {
 
 export async function loadBenchmarks(): Promise<BenchReport | null> {
   try {
-    const response = await fetch("/benchmarks.json", { cache: "no-cache" });
+    const response = await fetch(`${BASE}benchmarks.json`, { cache: "no-cache" });
     if (!response.ok) return null;
     return (await response.json()) as BenchReport;
   } catch {

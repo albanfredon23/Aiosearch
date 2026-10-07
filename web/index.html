@@ -11,7 +11,7 @@
   <body>
     <a class="skip" href="#q">Aller à la recherche</a>
     <header class="topbar">
-      <a class="brand" href="/" aria-label="AIOTECH Search, accueil">
+      <a class="brand" href="./" aria-label="AIOTECH Search, accueil">
         <span class="brand-mark" aria-hidden="true"></span>AIOTECH <span>Search</span>
       </a>
       <nav aria-label="Sections">
@@ -53,6 +53,9 @@
           </label>
           <label class="switch"><input id="web" type="checkbox" checked /> <span>Web (SearXNG)</span></label>
         </div>
+        <p id="demo-note" class="demo-note" hidden>Vitrine hors ligne : chaque question proposée rejoue les étapes réelles
+          du moteur, enregistrées sans web ni LLM. Pour poser les vôtres, lancez-le chez vous :
+          <code>docker compose up -d</code></p>
       </div>
 
       <p id="phase" class="phase" role="status" aria-live="polite"></p>

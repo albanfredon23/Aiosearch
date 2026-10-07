@@ -324,6 +324,20 @@ h1 {
   gap: 8px;
 }
 
+.demo-note {
+  margin: 0;
+  max-width: 640px;
+  align-self: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.demo-note code {
+  font-size: 0.78rem;
+}
+
 .chip {
   border: 1px solid var(--line);
   background: rgba(10, 18, 34, 0.6);
@@ -340,6 +354,10 @@ h1 {
 .chip:hover {
   color: var(--text);
   border-color: rgba(95, 225, 255, 0.5);
+}
+
+.options[hidden] {
+  display: none;
 }
 
 .options {

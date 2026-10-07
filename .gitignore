@@ -24,3 +24,4 @@ node_modules/
 web/dist/
 /bench-results/
 /engine/bench-results/
+/web/public/demo/
