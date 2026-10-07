@@ -3,6 +3,9 @@ Authentification et quotas.
 
     clés d'API     AIOTECH_API_KEYS="nom:clé,nom2:clé2" ; seules leurs empreintes SHA-256 sont
                    gardées en mémoire, comparées en temps constant (hmac.compare_digest) ;
+    clé web        AIOTECH_WEB_API_KEY_FILE : clé de l'interface, générée au premier démarrage
+                   et injectée par nginx sur les seules routes de l'interface ; ses quotas
+                   sont comptés par adresse IP du visiteur et elle n'ouvre jamais /admin ;
     administration AIOTECH_ADMIN_TOKEN, exigé EN PLUS d'une clé d'API valide sur toutes les
                    routes /admin (double contrôle) ; sans jeton configuré, l'administration
                    est fermée ;
@@ -42,8 +45,12 @@ class ApiKeyStore:
         self._admin = digest(admin_token) if admin_token else None
 
     @classmethod
-    def from_env(cls, raw_keys: str, admin_token: str | None) -> ApiKeyStore:
+    def from_env(cls, raw_keys: str, admin_token: str | None, extra: dict[str, str] | None = None) -> ApiKeyStore:
         keys: dict[str, str] = {}
+        for name, secret in (extra or {}).items():
+            if len(secret) < 16:
+                raise ValueError(f"clé d'API « {name} » trop courte (16 caractères minimum)")
+            keys[name] = secret
         for n, item in enumerate(part.strip() for part in raw_keys.split(",") if part.strip()):
             name, sep, secret = item.partition(":")
             if not sep:

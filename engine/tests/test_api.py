@@ -158,3 +158,18 @@ def test_mcp_lists_tools_with_key_only(client: TestClient) -> None:
     assert response.status_code == 200
     names = {t["name"] for t in response.json()["result"]["tools"]}
     assert {"aiotech_search", "calculate"} <= names
+
+
+def test_web_key_file_has_per_client_quota_and_no_admin(monkeypatch: pytest.MonkeyPatch, env: Path, tmp_path: Path) -> None:
+    web_key = "cle-interface-web-0123456789"
+    key_file = tmp_path / "web_key"
+    key_file.write_text(web_key + "\n")
+    monkeypatch.delenv("AIOTECH_API_KEYS")
+    monkeypatch.setenv("AIOTECH_WEB_API_KEY_FILE", str(key_file))
+    monkeypatch.setenv("AIOTECH_QUOTA_PER_MINUTE", "2")
+    web = {"x-api-key": web_key}
+    with TestClient(create_app(Settings.from_env())) as c:
+        assert c.get("/v1/models").status_code == 401
+        first = [c.get("/v1/models", headers={**web, "x-forwarded-for": "203.0.113.1"}).status_code for _ in range(3)]
+        assert first == [200, 200, 429]
+        assert c.get("/admin/stats", headers={**web, "x-admin-token": ADMIN_TOKEN}).status_code == 403

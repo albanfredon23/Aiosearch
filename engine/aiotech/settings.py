@@ -43,6 +43,8 @@ class Settings:
     anthropic_base_url: str
     anthropic_server_fallbacks: bool
     api_keys: str
+    web_api_key_file: Path | None
+    per_client_keys: tuple[str, ...]
     admin_token: str
     require_api_key: bool
     quota_per_minute: int
@@ -68,6 +70,7 @@ class Settings:
             raise ValueError("AIOTECH_LLM_PROVIDER doit valoir anthropic, litellm ou none")
         default_model = "claude-opus-5-5" if provider == "anthropic" else ""
         api_keys = _str("AIOTECH_API_KEYS")
+        web_key_file = _path("AIOTECH_WEB_API_KEY_FILE")
         return cls(
             llm_provider=provider,
             llm_model=_str("AIOTECH_LLM_MODEL", default_model) or default_model,
@@ -78,8 +81,10 @@ class Settings:
             anthropic_base_url=_str("AIOTECH_ANTHROPIC_BASE_URL"),
             anthropic_server_fallbacks=_bool("AIOTECH_ANTHROPIC_SERVER_FALLBACKS", True),
             api_keys=api_keys,
+            web_api_key_file=web_key_file,
+            per_client_keys=tuple(k.strip() for k in _str("AIOTECH_PER_CLIENT_KEYS", "web").split(",") if k.strip()),
             admin_token=_str("AIOTECH_ADMIN_TOKEN"),
-            require_api_key=_bool("AIOTECH_REQUIRE_API_KEY", bool(api_keys)),
+            require_api_key=_bool("AIOTECH_REQUIRE_API_KEY", bool(api_keys) or web_key_file is not None),
             quota_per_minute=_int("AIOTECH_QUOTA_PER_MINUTE", 30),
             quota_per_day=_int("AIOTECH_QUOTA_PER_DAY", 2000),
             redis_url=_str("AIOTECH_REDIS_URL"),

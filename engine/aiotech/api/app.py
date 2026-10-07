@@ -161,12 +161,13 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         """Clé exigée si AIOTECH_REQUIRE_API_KEY ; sinon clé facultative, quotas par adresse IP."""
         r = rt()
         presented = _presented_key(request)
+        client = request.client.host if request.client else "inconnu"
         if r.settings.require_api_key or (presented is not None and r.keys.enabled):
             who = r.keys.authenticate(presented)
         else:
-            client = request.client.host if request.client else "inconnu"
             who = ApiPrincipal(name="anonyme", key_id=digest(client)[:12])
-        decision = await r.quotas.consume(who.key_id)
+        bucket = f"{who.key_id}:{digest(client)[:12]}" if who.name in r.settings.per_client_keys else who.key_id
+        decision = await r.quotas.consume(bucket)
         if not decision.allowed:
             raise HTTPException(status_code=429, detail="Quota dépassé", headers={"Retry-After": str(decision.retry_after)})
         return who
@@ -176,6 +177,8 @@ def create_app(settings: Settings | None = None, runtime: Runtime | None = None)
         if not r.keys.enabled:
             raise AuthError(403, "Administration désactivée : aucune clé d'API configurée")
         who = r.keys.authenticate(_presented_key(request))
+        if who.name in r.settings.per_client_keys:
+            raise AuthError(403, "Cette clé est réservée à l'interface web")
         r.keys.authorize_admin(x_admin_token)
         return who
 

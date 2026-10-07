@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from aiotech.gateway.auth import ApiKeyStore, AuthError, QuotaManager
@@ -40,3 +42,13 @@ async def test_quota_per_minute_and_day() -> None:
     assert not refused.allowed and refused.retry_after > 0
     assert not (await quotas.consume("k", now + 60)).allowed
     assert (await quotas.consume("autre", now)).allowed
+
+
+def test_keygen_creates_once_and_never_overwrites(tmp_path: Path) -> None:
+    from aiotech.keygen import ensure
+
+    assert sorted(ensure(tmp_path)) == ["searxng_secret", "web_key"]
+    first = (tmp_path / "web_key").read_text()
+    assert len(first) >= 40
+    assert ensure(tmp_path) == []
+    assert (tmp_path / "web_key").read_text() == first

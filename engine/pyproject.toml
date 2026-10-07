@@ -9,19 +9,19 @@ description = "AIOTECH Search : moteur de recherche agentique Ã  trajectoires vÃ
 requires-python = ">=3.11"
 authors = [{ name = "Alban" }]
 dependencies = [
-    "numpy>=1.26",
-    "pydantic>=2.8",
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
-    "httpx>=0.27",
-    "anthropic>=1.0",
-    "redis>=5.0",
-    "neo4j>=5.20",
+    "numpy>=2.0,<3",
+    "pydantic>=2.8,<3",
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "httpx>=0.27,<1",
+    "anthropic>=1.11,<2",
+    "redis>=5.0,<9",
+    "neo4j>=5.20,<7",
 ]
 
 [project.optional-dependencies]
-providers = ["litellm>=1.50"]
-mcp = ["mcp>=1.2"]
+providers = ["litellm>=1.50,<2"]
+mcp = ["mcp>=2.3,<3"]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "fakeredis>=2.20", "ruff>=0.6", "mypy>=1.11"]
 
 [tool.setuptools.packages.find]

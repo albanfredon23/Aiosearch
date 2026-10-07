@@ -214,7 +214,16 @@ async def build_runtime(settings: Settings | None = None) -> Runtime:
     jail = FileJail(cfg.docs_dir) if cfg.docs_dir is not None and cfg.docs_dir.is_dir() else None
     tools = default_registry(jail)
     tools.register(_search_tool(engine))
-    keys = ApiKeyStore.from_env(cfg.api_keys, cfg.admin_token or None)
+    extra: dict[str, str] = {}
+    if cfg.web_api_key_file is not None:
+        try:
+            web_key = cfg.web_api_key_file.read_text("utf-8").strip()
+        except OSError as exc:
+            notes.append(f"clé de l'interface web illisible ({exc.strerror}) : interface désactivée")
+        else:
+            if web_key:
+                extra["web"] = web_key
+    keys = ApiKeyStore.from_env(cfg.api_keys, cfg.admin_token or None, extra)
     quotas = QuotaManager(kv, cfg.quota_per_minute, cfg.quota_per_day)
     for note in notes:
         log.warning(note)
