@@ -1,9 +1,12 @@
 """
-Recherche hybride : BM25 (lexical exact) + vecteurs lexicaux hachés (critère `reach` de l'ARG),
-fusionnés par rangs réciproques (Reciprocal Rank Fusion, k = 60).
+Recherche hybride : BM25 (lexical exact) + vecteurs lexicaux hachés (critère `reach` de l'ARG).
 
-La fusion par rangs évite de mélanger des échelles de scores incomparables : un passage
-bien classé par les deux méthodes passe devant un passage excellent pour une seule.
+Fusion par scores normalisés : chaque signal est rapporté au meilleur passage de la requête,
+puis score = (BM25 / BM25 max + w × reach / reach max) / (1 + w). Contrairement à une fusion
+par rangs, l'écart de pertinence entre deux passages est conservé : le saut par liens du
+pipeline et la qualité de trajectoire du TAP s'en servent. Les vecteurs hachés restent un
+signal lexical (mots racinisés et trigrammes), utile surtout aux variantes d'écriture : leur
+poids w est faible, réglé hors de l'échantillon de test du benchmark (bench/data/SOURCES.md).
 Un passage trouvé par les seuls vecteurs (aucun mot commun avec la requête) doit atteindre
 reach >= 0,3 : en dessous, la ressemblance ne tient qu'à des fragments de mots.
 """
@@ -20,7 +23,7 @@ from aiotech.core.text import content_words
 from aiotech.models import Passage, ScoredPassage
 from aiotech.retrieval.bm25 import BM25Index
 
-RRF_K = 60.0
+VECTOR_WEIGHT = 0.1
 
 
 @dataclass
@@ -28,6 +31,7 @@ class PassageIndex:
     embedder: HashingEmbedder = field(default_factory=lambda: HashingEmbedder(bigram_weight=0.0))
     min_reach: float = 0.12
     vector_only_reach: float = 0.3
+    vector_weight: float = VECTOR_WEIGHT
     passages: list[Passage] = field(default_factory=list)
     _bm25: BM25Index = field(default_factory=BM25Index)
     _matrix: Matrix = field(default_factory=lambda: np.zeros((0, 1), dtype=np.float32))
@@ -54,20 +58,19 @@ class PassageIndex:
         )[:pool]
         bm25_rank = {i: rank for rank, (i, _) in enumerate(bm25_ranked, start=1)}
         vector_rank = {i: rank for rank, (i, _) in enumerate(vector_ranked, start=1)}
+        top_bm25 = bm25_ranked[0][1] if bm25_ranked else 0.0
+        top_reach = vector_ranked[0][1] if vector_ranked else 0.0
 
         fused: list[ScoredPassage] = []
         for i in set(bm25_rank) | set(vector_rank):
             if i not in bm25_rank and reaches[i] < self.vector_only_reach:
                 continue
-            score = 0.0
-            if i in bm25_rank:
-                score += 1.0 / (RRF_K + bm25_rank[i])
-            if i in vector_rank:
-                score += 1.0 / (RRF_K + vector_rank[i])
+            lexical = bm25[i] / top_bm25 if i in bm25_rank and top_bm25 > 0 else 0.0
+            vector = float(reaches[i]) / top_reach if i in vector_rank and top_reach > 0 else 0.0
             fused.append(
                 ScoredPassage(
                     passage=self.passages[i],
-                    score=round(score * RRF_K, 6),
+                    score=round((lexical + self.vector_weight * vector) / (1.0 + self.vector_weight), 6),
                     bm25_rank=bm25_rank.get(i),
                     vector_rank=vector_rank.get(i),
                 )

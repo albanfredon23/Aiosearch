@@ -33,3 +33,34 @@ redonne exactement les mêmes octets) et versionnés pour que le benchmark tourn
   phrases, ce qui mesure le classement des preuves et non la recherche dans tout Wikipédia.
 - HotpotQA « distractor » fournit 10 paragraphes par question : on mesure la sélection des paragraphes utiles
   et de la phrase de réponse, pas la recherche ouverte (« fullwiki »).
+
+## Réglage de la recherche, séparé du test
+
+Les réglages `VECTOR_WEIGHT` (retrieval/index.py) et `RetrievalParams` (pipeline.py) ne sont jamais choisis
+sur les 300 questions du benchmark. Ils viennent de `python -m aiotech.bench.tune`, qui tire ses questions
+parmi les 7 105 questions du même dev « distractor » absentes de l'échantillon de test (exclusion vérifiée).
+
+Historique, par transparence : la première version (fusion par rangs réciproques, vecteurs au même poids
+que BM25, sans saut par liens) a été mesurée sur l'échantillon de test le 2026-10-07 et faisait moins bien
+que BM25 seul (rappel @2 : 64,7 % contre 69,0 %). C'est ce résultat qui a déclenché le diagnostic ; le
+diagnostic et le réglage ont ensuite été faits uniquement hors test :
+
+- 1 000 questions hors test (`--seed 7`), recherche seule, 10 premiers documents :
+
+| Réglage | r@2 | r@5 | tous@2 | tous@5 |
+|---|---|---|---|---|
+| BM25 seul (RAG classique) | 65,7 | 85,6 | 36,5 | 72,2 |
+| première version (vecteurs 1,0, entités 1,0, pas de liens) | 58,8 | 77,8 | 27,4 | 58,3 |
+| vecteurs 0,1, entités 0,5, pas de liens | 64,7 | 84,2 | 34,9 | 69,5 |
+| **retenu : vecteurs 0,1, entités 0,5, liens 0,5** | **74,2** | **92,8** | **51,7** | **86,2** |
+| vecteurs 0,0, entités 0,5, liens 0,5 | 74,5 | 92,7 | 52,1 | 86,0 |
+| vecteurs 0,1, entités 0,5, liens 1,0 | 72,0 | 93,0 | 48,7 | 86,4 |
+
+  La grille complète (24 réglages) s'obtient avec la commande ci-dessus. Les vecteurs hachés sont un signal
+  lexical : sur cet anglais ils n'apportent rien, mais ils rattrapent les variantes d'écriture (pluriels,
+  accents, fautes) en français ; un poids de 0,1 en garde l'effet pour un coût de 0,3 point ici.
+- Contrôle sur un second tirage hors test (`--seed 11`, 1 000 questions) avec les réglages retenus : rappel @2
+  74,7 % (BM25 66,5 %), tous@2 53,2 % (BM25 37,3 %).
+- FEVER : contrôle sur les 1 065 affirmations générées de FeverSymmetric (jamais dans le test) : preuve
+  exacte en 1re position 43,2 % pour BM25 et 43,2 à 43,3 % pour AIOTECH selon le poids des vecteurs
+  (0, 0,1, 0,25) ; le réglage ne change donc presque rien sur FEVER, où il n'y a pas de liens de titre.

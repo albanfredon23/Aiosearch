@@ -14,6 +14,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
 from collections import Counter
 from collections.abc import Awaitable, Callable, Sequence
@@ -344,7 +345,8 @@ def write_outputs(out: Path, report: dict[str, Any], text: str) -> list[str]:
         (out / "results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), "utf-8")
         (out / "results.md").write_text(text, "utf-8")
     except OSError as exc:
-        return [f"résultats non écrits dans {out} ({exc.strerror}) : le rapport ci-dessus fait foi"]
+        return [f"résultats non écrits dans {out} ({exc.strerror}) : le rapport ci-dessus fait foi. Sous Docker, "
+                'pour écrire dans ./bench-results : docker compose run --rm --user "$(id -u):$(id -g)" bench']
     return [f"résultats écrits dans {out}/results.json et {out}/results.md"]
 
 
@@ -402,7 +404,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--llm-model", default=None)
     parser.add_argument("--cpu-watts", type=float, default=DEFAULT_CPU_WATTS,
                         help="puissance par cœur occupé pour l'estimation d'énergie sans RAPL")
-    parser.add_argument("--out", type=Path, default=Path("bench-results"))
+    parser.add_argument("--out", type=Path, default=Path(os.environ.get("AIOTECH_BENCH_OUT", "bench-results")))
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s : %(message)s")
     report = asyncio.run(main_async(args))

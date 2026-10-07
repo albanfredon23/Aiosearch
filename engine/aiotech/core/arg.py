@@ -77,10 +77,11 @@ def coverage(query_words: Sequence[str], segment_words: set[str], idf: dict[str,
     unique = set(query_words)
     if not unique:
         return 1.0
-    total = sum(max(idf.get(w, 0.0), 0.0) for w in unique)
+    ordered = sorted(unique)  # ordre fixe : sommes flottantes identiques d'une exécution à l'autre
+    total = sum(max(idf.get(w, 0.0), 0.0) for w in ordered)
     if total <= 0.0:
         return 1.0 if unique <= segment_words else len(unique & segment_words) / len(unique)
-    return clamp01(sum(max(idf.get(w, 0.0), 0.0) for w in unique if w in segment_words) / total)
+    return clamp01(sum(max(idf.get(w, 0.0), 0.0) for w in ordered if w in segment_words) / total)
 
 
 @dataclass(frozen=True)

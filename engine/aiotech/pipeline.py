@@ -4,7 +4,8 @@ Pipeline complet d'AIOTECH Search, diffusé étape par étape (SSE) :
     garde-fous      masquage RGPD, blocage des injections (0 token payé si bloqué)
     intention       type de question, contraintes, interprétations T1..Tn (neurones)
     budget          AdaptiveComputeGate : trajectoires, passages, sauts, effort, appels LLM
-    recherche       par trajectoire : BM25 + vecteurs (corpus) et SearXNG (web), 2e saut si budget
+    recherche       par trajectoire : BM25 + vecteurs (corpus) et SearXNG (web), saut par les liens
+                    de titre entre documents, 2e saut par entités pont si budget
     graphe          affirmations (règles, et LLM avec citation vérifiée), contradictions X ≠ Y
     raisonnement    SCG (porte de Gödel) puis TAP (fiabilité) par trajectoire
     vérification    [FAIT] / [INFÉRENCE] / [INCERTAIN] / [NON VÉRIFIÉ] pour chaque affirmation
@@ -54,7 +55,6 @@ from aiotech.verification.engine import VerificationEngine
 
 log = logging.getLogger("aiotech.pipeline")
 
-HOP_DISCOUNT = 0.8
 WEB_TIMEOUT = 8.0
 SINK_TIMEOUT = 3.0
 MAX_GRAPH_CLAIMS = 300
@@ -66,6 +66,23 @@ class WebSearch(Protocol):
 
 class GraphSink(Protocol):
     async def write(self, search_id: str, query: str, graph: dict[str, Any]) -> None: ...
+
+
+@dataclass(frozen=True)
+class RetrievalParams:
+    """Réglages de la recherche, choisis hors de l'échantillon de test (aiotech/bench/data/SOURCES.md).
+
+    subquery_weight  poids des entités de la question cherchées seules (fragments de la question)
+    link_boost       part du score d'un passage transmise au document dont il cite le titre
+    link_sources     nombre de meilleurs documents dont on suit les liens de titre
+    pool_factor      profondeur du vivier de passages (× top_k) dans lequel les liens sont notés
+    hop_discount     poids des passages du second saut par entités pont (palier approfondi)
+    """
+    subquery_weight: float = 0.5
+    link_boost: float = 0.5
+    link_sources: int = 2
+    pool_factor: int = 3
+    hop_discount: float = 0.8
 
 
 @dataclass(frozen=True)
@@ -92,6 +109,10 @@ class _Run:
 
 def _event(kind: str, data: dict[str, Any]) -> SearchEvent:
     return SearchEvent(type=kind, data=data)  # type: ignore[arg-type]
+
+
+def _weighted(passages: Sequence[ScoredPassage], weight: float) -> list[ScoredPassage]:
+    return [sp.model_copy(update={"score": round(sp.score * weight, 6)}) for sp in passages]
 
 
 def _merge(results: Sequence[Sequence[ScoredPassage]], top_k: int) -> list[ScoredPassage]:
@@ -121,6 +142,7 @@ class SearchEngine:
         llm: LLMTasks | None = None,
         graph_sink: GraphSink | None = None,
         reliability: ReliabilityModel | None = None,
+        retrieval: RetrievalParams | None = None,
         cache_ttl: int = 600,
     ) -> None:
         self.corpus = corpus
@@ -135,6 +157,7 @@ class SearchEngine:
         self.llm = llm
         self.graph_sink = graph_sink
         self.reliability = reliability or corpus.reliability
+        self.params = retrieval or RetrievalParams()
         self.cache_ttl = cache_ttl
 
     def _cache_key(self, query: str, options: SearchOptions) -> str:
@@ -215,7 +238,8 @@ class SearchEngine:
         t = run.mark("planning", t)
         yield _event("interpretations", self._interpretations_payload(plan, budget))
 
-        web_store = CorpusStore(reliability=self.reliability, chunk_tokens=self.corpus.chunk_tokens)
+        web_store = CorpusStore(reliability=self.reliability, chunk_tokens=self.corpus.chunk_tokens,
+                                vector_weight=self.corpus.vector_weight)
         if opts.use_web and self.web is not None:
             await self._web_retrieval(plan, web_store, run)
         t = run.mark("web", t)
@@ -227,7 +251,7 @@ class SearchEngine:
                 passages = self._second_hop(plan, passages, budget.top_k, web_store)
             evidence_passages[interp.id] = passages
             yield _event("retrieval", self._retrieval_payload(interp, passages))
-        context = self._retrieve([plan.query, *plan.entities], budget.top_k, web_store)
+        context = self._retrieve([plan.query, *plan.entities], budget.top_k, web_store, self.params.subquery_weight)
         t = run.mark("retrieval", t)
 
         all_passages: dict[str, Passage] = {sp.passage.id: sp.passage for sp in context}
@@ -303,19 +327,63 @@ class SearchEngine:
         plan = self.planner.plan(query, max_interpretations=4)
         budget = self.compute_gate.budget(plan, depth, use_llm=False)
         k = top_k or budget.top_k
-        empty = CorpusStore(reliability=self.reliability, chunk_tokens=self.corpus.chunk_tokens)
-        passages = self._retrieve([plan.query, *plan.entities], k, empty)
+        empty = CorpusStore(reliability=self.reliability, chunk_tokens=self.corpus.chunk_tokens,
+                                vector_weight=self.corpus.vector_weight)
+        passages = self._retrieve([plan.query, *plan.entities], k, empty, self.params.subquery_weight)
         if budget.hops > 1:
             passages = self._second_hop(plan, passages, k, empty)
         return passages, budget
 
-    def _retrieve(self, queries: Sequence[str], top_k: int, web_store: CorpusStore) -> list[ScoredPassage]:
+    def _retrieve(self, queries: Sequence[str], top_k: int, web_store: CorpusStore,
+                  secondary: float = 1.0) -> list[ScoredPassage]:
+        """Recherche des requêtes puis saut par liens de titre.
+
+        `secondary` pondère les requêtes après la première : les entités extraites de la question n'en
+        sont que des fragments (`subquery_weight`), alors que les sous-requêtes d'une interprétation en
+        sont des reformulations complètes (poids plein).
+        """
+        pool_k = top_k * self.params.pool_factor
         batches: list[list[ScoredPassage]] = []
-        for q in queries:
-            batches.append(self.corpus.search(q, top_k))
-            if web_store.passages:
-                batches.append(web_store.search(q, top_k))
-        return _merge(batches, top_k)
+        for n, q in enumerate(queries):
+            weight = 1.0 if n == 0 else secondary
+            for store in (self.corpus, web_store):
+                if store is web_store and not store.passages:
+                    continue
+                found = store.search(q, pool_k)
+                batches.append(found if weight == 1.0 else _weighted(found, weight))
+        pool = _merge(batches, pool_k)
+        return _merge([pool[:top_k], self._link_hop(pool, top_k, web_store)], top_k)
+
+    def _link_hop(self, pool: list[ScoredPassage], top_k: int, web_store: CorpusStore) -> list[ScoredPassage]:
+        """Saut par le graphe des documents : un des meilleurs passages cite le titre d'un autre document.
+
+        Le document cité reçoit `link_boost` × le score du passage qui le cite, ajouté à son propre score
+        pour la requête (scores de fusion rapportés au meilleur passage, voir retrieval/index.py).
+        """
+        own: dict[str, ScoredPassage] = {}
+        for sp in pool:
+            own.setdefault(sp.passage.document_id, sp)
+        sources: list[ScoredPassage] = []
+        for sp in pool[:top_k]:
+            if all(sp.passage.document_id != s.passage.document_id for s in sources):
+                sources.append(sp)
+            if len(sources) == self.params.link_sources:
+                break
+        boosted: list[ScoredPassage] = []
+        for source in sources:
+            store = self.corpus if source.passage.id in self.corpus.passages else web_store
+            for document_id in store.linked_documents(source.passage.text):
+                if document_id == source.passage.document_id:
+                    continue
+                current = own.get(document_id)
+                target = current.passage if current is not None else store.first_passage(document_id)
+                if target is None:
+                    continue
+                base = current.score if current is not None else 0.0
+                boosted.append(ScoredPassage(passage=target, score=round(base + self.params.link_boost * source.score, 6),
+                                             bm25_rank=current.bm25_rank if current else None,
+                                             vector_rank=current.vector_rank if current else None))
+        return boosted
 
     def _second_hop(self, plan: IntentPlan, first: list[ScoredPassage], top_k: int,
                     web_store: CorpusStore) -> list[ScoredPassage]:
@@ -331,8 +399,7 @@ class SearchEngine:
             return first
         terms = " ".join(plan.key_terms[:4])
         hop = self._retrieve([f"{b} {terms}".strip() for b in bridges[:2]], top_k, web_store)
-        discounted = [h.model_copy(update={"score": round(h.score * HOP_DISCOUNT, 6)}) for h in hop]
-        return _merge([first, discounted], top_k)
+        return _merge([first, _weighted(hop, self.params.hop_discount)], top_k)
 
     async def _web_retrieval(self, plan: IntentPlan, store: CorpusStore, run: _Run) -> None:
         assert self.web is not None

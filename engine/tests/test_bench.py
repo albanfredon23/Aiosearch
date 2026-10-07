@@ -18,6 +18,7 @@ from aiotech.bench.metrics import (
     reciprocal_rank,
 )
 from aiotech.bench.reader import Reader, ShortAnswer, Verdict, evidence_block
+from aiotech.bench.tune import main as tune_main
 from aiotech.llm.router import LLMRouter
 from tests.conftest import FakeProvider
 
@@ -99,3 +100,10 @@ def test_cli_without_key_or_writable_output(tmp_path: Path, monkeypatch: pytest.
     assert "résultats non écrits" in captured.err
     assert main(["--limit", "2", "--datasets", "fever", "--out", str(tmp_path / "ok")]) == 0
     assert (tmp_path / "ok" / "results.json").is_file()
+
+
+def test_tune_refuses_a_file_that_is_not_the_official_dev_set(tmp_path: Path) -> None:
+    fake = tmp_path / "hotpot.json"
+    fake.write_text("[]", encoding="utf-8")
+    with pytest.raises(SystemExit, match="empreinte"):
+        tune_main(["--hotpot", str(fake), "--n", "1"])

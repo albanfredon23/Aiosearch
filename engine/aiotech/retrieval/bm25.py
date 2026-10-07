@@ -39,7 +39,7 @@ class BM25Index:
         if n == 0:
             return {}
         result: dict[int, float] = defaultdict(float)
-        for term in set(content_words(query)):
+        for term in sorted(set(content_words(query))):  # ordre fixe : sommes identiques d'une exécution à l'autre
             postings = self._postings.get(term)
             if not postings:
                 continue

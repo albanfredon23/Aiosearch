@@ -1,5 +1,6 @@
 """
-Corpus documentaire : documents, passages, affirmations pré-extraites, index hybride.
+Corpus documentaire : documents, passages, affirmations pré-extraites, index hybride,
+liens entre documents par mention de titre.
 
 Les affirmations par règles sont extraites UNE fois à l'ingestion et gardées avec chaque
 passage : une recherche ne recalcule rien pour le corpus (frugalité, latence stable).
@@ -21,7 +22,8 @@ from pathlib import Path
 from aiotech.core.text import chunk_text
 from aiotech.graph.claims import RuleExtractor
 from aiotech.models import Claim, Document, Passage, ScoredPassage, Source
-from aiotech.retrieval.index import PassageIndex
+from aiotech.retrieval.index import VECTOR_WEIGHT, PassageIndex
+from aiotech.retrieval.links import TitleLinks
 from aiotech.retrieval.reliability import ReliabilityModel
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
@@ -65,6 +67,7 @@ def extract_document_claims(passages: Iterable[Passage], extractor: RuleExtracto
 class CorpusStore:
     reliability: ReliabilityModel = field(default_factory=ReliabilityModel)
     chunk_tokens: int = 120
+    vector_weight: float = VECTOR_WEIGHT
     persist_dir: Path | None = None
     extractor: RuleExtractor = field(default_factory=RuleExtractor)
     documents: dict[str, Document] = field(default_factory=dict)
@@ -72,8 +75,13 @@ class CorpusStore:
     claims: dict[str, list[Claim]] = field(default_factory=dict)
     version: int = 0
     _index: PassageIndex = field(default_factory=PassageIndex)
+    _links: TitleLinks = field(default_factory=TitleLinks)
+    _by_document: dict[str, list[str]] = field(default_factory=dict)
     _dirty: bool = True
     _lock: threading.RLock = field(default_factory=threading.RLock)
+
+    def __post_init__(self) -> None:
+        self._index.vector_weight = self.vector_weight
 
     def add(self, document: Document, persist: bool = True) -> list[Passage]:
         if not _SAFE_ID.match(document.id):
@@ -121,10 +129,31 @@ class CorpusStore:
 
     def search(self, query: str, top_k: int) -> list[ScoredPassage]:
         with self._lock:
-            if self._dirty:
-                self._index.build(list(self.passages.values()))
-                self._dirty = False
+            self._refresh()
             return self._index.search(query, top_k)
+
+    def linked_documents(self, text: str) -> list[str]:
+        """Documents du corpus dont le titre est cité dans `text`."""
+        with self._lock:
+            self._refresh()
+            return self._links.mentioned(text)
+
+    def first_passage(self, document_id: str) -> Passage | None:
+        with self._lock:
+            self._refresh()
+            ids = self._by_document.get(document_id)
+            return self.passages[ids[0]] if ids else None
+
+    def _refresh(self) -> None:
+        if not self._dirty:
+            return
+        self._index.build(list(self.passages.values()))
+        self._links.build(self.documents.values())
+        by_document: dict[str, list[str]] = {}
+        for pid, passage in self.passages.items():
+            by_document.setdefault(passage.document_id, []).append(pid)
+        self._by_document = by_document
+        self._dirty = False
 
     def claims_for(self, passage_id: str) -> list[Claim]:
         return list(self.claims.get(passage_id, []))
